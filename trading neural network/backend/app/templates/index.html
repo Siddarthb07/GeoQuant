@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ app_name }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <link rel="stylesheet" href="/static/style.css?v=20260318d" />
+  </head>
+  <body>
+    <div class="bg-shape bg-a"></div>
+    <div class="bg-shape bg-b"></div>
+
+    <header class="topbar">
+      <div class="brand">
+        <h1>{{ app_name }}</h1>
+        <p>World Affairs + Neural Signals + Trade Execution</p>
+      </div>
+      <div class="controls">
+        <button id="trainBtn">Retrain Models</button>
+        <button id="refreshBtn">Refresh Signals</button>
+        <label class="live-toggle">
+          <input id="liveToggle" type="checkbox" />
+          <span>Live Mode</span>
+        </label>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="panel news-panel">
+        <h2>Global News Flow</h2>
+        <div id="newsImpact" class="model-card status">Calculating stocks most affected by current news...</div>
+        <div id="newsList" class="scroll-area"></div>
+      </aside>
+
+      <section class="panel chart-panel">
+        <div class="chart-header">
+          <div>
+            <h2 id="selectedSymbol">Select a trade candidate</h2>
+            <div id="chartMeta" class="status">Live intraday data is exchange-delayed.</div>
+          </div>
+          <div class="chart-tools">
+            <label>
+              <span>Timeframe</span>
+              <select id="timeframeSelect">
+                <option value="5m" selected>5m Live</option>
+                <option value="15m">15m</option>
+                <option value="30m">30m</option>
+                <option value="60m">60m</option>
+                <option value="1d">1D Swing</option>
+              </select>
+            </label>
+            <label class="live-toggle">
+              <input id="autoChartToggle" type="checkbox" checked />
+              <span>Auto Refresh</span>
+            </label>
+            <div id="trainStatus" class="status">Loading...</div>
+          </div>
+        </div>
+        <div id="modelAccuracy" class="model-card status">Loading model accuracy metrics...</div>
+        <div id="chart" class="chart"></div>
+        <div class="trade-details" id="tradeDetails">
+          <p>Pick a candidate from the right panel to inspect setup details.</p>
+        </div>
+      </section>
+
+      <aside class="panel signal-panel">
+        <h2>Directional Opportunities</h2>
+        <div class="candidate-group">
+          <h3>Top 15 Long</h3>
+          <div id="candidateLongTable" class="scroll-area candidate-scroll"></div>
+        </div>
+        <div class="candidate-group">
+          <h3>Top 15 Short</h3>
+          <div id="candidateShortTable" class="scroll-area candidate-scroll"></div>
+        </div>
+        <div id="selfLearningStatus" class="model-card status">Loading self-learning status...</div>
+
+        <div class="ticket">
+          <h3>Trade Ticket</h3>
+          <div class="ticket-row">
+            <label>Symbol</label>
+            <input id="ticketSymbol" type="text" readonly />
+          </div>
+          <div class="ticket-row">
+            <label>Market</label>
+            <input id="ticketMarket" type="text" readonly />
+          </div>
+          <div class="ticket-row">
+            <label>Side</label>
+            <select id="ticketSide">
+              <option value="buy">BUY</option>
+              <option value="sell">SELL</option>
+            </select>
+          </div>
+          <div class="ticket-row">
+            <label>Qty</label>
+            <input id="ticketQty" type="number" value="1" min="0.001" step="0.001" />
+          </div>
+          <button id="placeOrderBtn">Place Order</button>
+          <p id="orderStatus" class="status"></p>
+        </div>
+
+        <div class="orders">
+          <h3>Recent Orders</h3>
+          <p class="status">Live routing: US via Alpaca keys. India runs paper fallback unless broker API is added.</p>
+          <div id="ordersList" class="scroll-area small"></div>
+        </div>
+
+        <div class="orders">
+          <h3>Bought/Sold Profit Tracker</h3>
+          <div id="portfolioSummary" class="model-card status">Loading P&L summary...</div>
+          <div id="portfolioList" class="scroll-area small"></div>
+        </div>
+      </aside>
+    </main>
+
+    <script src="/static/app.js?v=20260318d"></script>
+  </body>
+</html>
