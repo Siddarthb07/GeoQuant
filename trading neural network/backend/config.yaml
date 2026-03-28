@@ -1,0 +1,54 @@
+pipeline:
+  random_seed: 42
+
+data:
+  # Leave empty to use free yfinance intraday feed (limited historical coverage for 5m).
+  csv_path: null
+  interval: "5m"
+  symbols:
+    - AAPL
+    - MSFT
+    - NVDA
+    - AMZN
+    - GOOGL
+    - META
+    - TSLA
+    - JPM
+    - XOM
+    - AVGO
+    - RELIANCE.NS
+    - TCS.NS
+    - HDFCBANK.NS
+    - ICICIBANK.NS
+    - INFY.NS
+    - SBIN.NS
+    - ITC.NS
+    - LT.NS
+    - AXISBANK.NS
+    - TATAMOTORS.NS
+
+validation:
+  train_start: "2000-01-01"
+  test_start: "2020-01-01"
+  test_end: "2025-12-31"
+  step_months: 3
+  min_train_rows: 800
+  min_test_rows: 100
+  periods_per_year: 19656
+
+model:
+  buy_threshold: 0.55
+  sell_threshold: 0.45
+  epochs: 35
+  batch_size: 512
+  learning_rate: 0.001
+
+costs:
+  initial_capital: 100000
+  position_fraction: 0.10
+  brokerage_fee_bps: 10
+  slippage_bps: 5
+
+outputs:
+  output_dir: "artifacts"
+  persist_model: true

@@ -142,3 +142,29 @@ class PortfolioSummary(BaseModel):
 class PortfolioResponse(BaseModel):
     summary: PortfolioSummary
     items: List[PortfolioItem] = Field(default_factory=list)
+
+
+class ResearchRunRequest(BaseModel):
+    config_path: str = "config.yaml"
+    csv_path: Optional[str] = None
+    initial_capital: Optional[float] = None
+    position_fraction: Optional[float] = None
+    brokerage_fee_bps: Optional[float] = None
+    slippage_bps: Optional[float] = None
+    buy_threshold: Optional[float] = None
+    sell_threshold: Optional[float] = None
+    step_months: Optional[int] = None
+    epochs: Optional[int] = None
+    batch_size: Optional[int] = None
+    learning_rate: Optional[float] = None
+    output_dir: Optional[str] = None
+    persist_model: Optional[bool] = None
+
+
+class ResearchRunResponse(BaseModel):
+    ok: bool
+    report_path: str
+    classification_metrics: dict
+    performance_metrics: dict
+    benchmark_comparison: dict
+    data_warnings: List[str] = Field(default_factory=list)

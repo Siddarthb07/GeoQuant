@@ -2,7 +2,14 @@ param(
     [string]$BindHost = "127.0.0.1",
     [int]$Port = 8020,
     [switch]$SkipInstall,
-    [switch]$Reload
+    [switch]$Reload,
+    [switch]$SkipResearch,
+    [string]$ConfigPath = "config.yaml",
+    [string]$CsvPath = "",
+    [double]$InitialCapital = 100000,
+    [double]$PositionFraction = 0.10,
+    [double]$BrokerageFeeBps = 10,
+    [double]$SlippageBps = 5
 )
 
 $ErrorActionPreference = "Stop"
@@ -137,6 +144,27 @@ if (-not (Test-PythonModule $venvPython "uvicorn")) {
 if ((-not (Test-Path ".env")) -and (Test-Path ".env.example")) {
     Copy-Item ".env.example" ".env"
     Write-Host "Created backend/.env from .env.example (edit if using live broker keys)."
+}
+
+if (-not $SkipResearch) {
+    Write-Host ""
+    Write-Host "Running reproducible research pipeline (walk-forward + backtest + metrics)..."
+    $trainArgs = @(
+        "train.py",
+        "--config", $ConfigPath,
+        "--initial-capital", "$InitialCapital",
+        "--position-fraction", "$PositionFraction",
+        "--brokerage-fee-bps", "$BrokerageFeeBps",
+        "--slippage-bps", "$SlippageBps"
+    )
+    if (-not [string]::IsNullOrWhiteSpace($CsvPath)) {
+        $trainArgs += @("--csv-path", $CsvPath)
+    }
+    & $venvPython @trainArgs
+    if ($LASTEXITCODE -ne 0) {
+        throw "Research pipeline failed. Fix the error above or use -SkipResearch to start API only."
+    }
+    Write-Host "Research pipeline completed."
 }
 
 Write-Host ""

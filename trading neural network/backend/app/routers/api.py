@@ -10,6 +10,8 @@ from app.core.schemas import (
     NewsImpactItem,
     NewsItem,
     PortfolioResponse,
+    ResearchRunRequest,
+    ResearchRunResponse,
     SelfLearningStatus,
     TradeOrderRequest,
     TradeOrderResponse,
@@ -19,6 +21,7 @@ from app.core.schemas import (
 from app.data.news_data import fetch_global_news
 from app.services.broker_service import place_trade
 from app.services.portfolio_service import get_portfolio_performance
+from app.services.research_pipeline import load_latest_report, load_pipeline_config, run_research_pipeline
 from app.services.self_learning import get_self_learning_status
 from app.services.signal_service import (
     get_chart_payload,
@@ -129,3 +132,38 @@ def self_learning_status() -> SelfLearningStatus:
 def reload_models() -> dict:
     refresh_bundles()
     return {"ok": True, "message": "Model bundles refreshed from disk."}
+
+
+@router.post("/research/run", response_model=ResearchRunResponse)
+def research_run(request: ResearchRunRequest) -> ResearchRunResponse:
+    overrides = {
+        "data_csv_path": request.csv_path,
+        "initial_capital": request.initial_capital,
+        "position_fraction": request.position_fraction,
+        "brokerage_fee_bps": request.brokerage_fee_bps,
+        "slippage_bps": request.slippage_bps,
+        "buy_threshold": request.buy_threshold,
+        "sell_threshold": request.sell_threshold,
+        "step_months": request.step_months,
+        "epochs": request.epochs,
+        "batch_size": request.batch_size,
+        "learning_rate": request.learning_rate,
+        "output_dir": request.output_dir,
+        "persist_model": request.persist_model,
+    }
+    cfg = load_pipeline_config(config_path=request.config_path, overrides=overrides)
+    report = run_research_pipeline(cfg)
+    report_path = report.get("artifacts", {}).get("report", {}).get("latest_path", "")
+    return ResearchRunResponse(
+        ok=True,
+        report_path=str(report_path),
+        classification_metrics=report.get("classification_metrics", {}),
+        performance_metrics=report.get("performance_metrics", {}),
+        benchmark_comparison=report.get("benchmark_comparison", {}),
+        data_warnings=report.get("data_warnings", []),
+    )
+
+
+@router.get("/research/latest")
+def research_latest(output_dir: str = Query(default="artifacts")) -> dict:
+    return load_latest_report(output_dir=output_dir)
