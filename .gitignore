@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.env
+backend/.env
+backend/app/trading.db
+backend/app/models_store/*.pt
+backend/app/models_store/*.pkl
+backend/app/models_store/*.json
+backend/artifacts/
+.DS_Store
+Thumbs.db
+*.log
