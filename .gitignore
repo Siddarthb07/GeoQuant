@@ -14,3 +14,6 @@ backend/artifacts/
 .DS_Store
 Thumbs.db
 *.log
+
+results_run.log
+

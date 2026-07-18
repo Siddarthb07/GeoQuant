@@ -1,0 +1,45 @@
+# Public measured walk-forward run (committed under results/).
+# Repro: python train.py --config config.results_daily.yaml --no-persist-model
+pipeline:
+  random_seed: 42
+
+data:
+  csv_path: null
+  interval: "1d"
+  symbols:
+    - AAPL
+    - MSFT
+    - NVDA
+    - AMZN
+    - GOOGL
+    - META
+    - RELIANCE.NS
+    - TCS.NS
+    - INFY.NS
+    - HDFCBANK.NS
+
+validation:
+  train_start: "2018-01-01"
+  test_start: "2022-01-01"
+  test_end: "2025-12-31"
+  step_months: 3
+  min_train_rows: 400
+  min_test_rows: 40
+  periods_per_year: 252
+
+model:
+  buy_threshold: 0.55
+  sell_threshold: 0.45
+  epochs: 40
+  batch_size: 256
+  learning_rate: 0.001
+
+costs:
+  initial_capital: 100000
+  position_fraction: 0.10
+  brokerage_fee_bps: 10
+  slippage_bps: 5
+
+outputs:
+  output_dir: "artifacts"
+  persist_model: false

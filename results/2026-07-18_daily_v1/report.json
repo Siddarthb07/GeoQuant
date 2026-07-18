@@ -1,0 +1,288 @@
+{
+  "run_at_utc": "2026-07-18T16:16:28.063555+00:00",
+  "config": {
+    "train_start": "2018-01-01",
+    "test_start": "2022-01-01",
+    "test_end": "2025-12-31",
+    "effective_train_start": "2018-01-30",
+    "effective_test_start": "2022-01-01",
+    "effective_test_end": "2025-12-31",
+    "interval": "1d",
+    "step_months": 3,
+    "buy_threshold": 0.55,
+    "sell_threshold": 0.45,
+    "initial_capital": 100000.0,
+    "position_fraction": 0.1,
+    "brokerage_fee_bps": 10.0,
+    "slippage_bps": 5.0,
+    "symbols": [
+      "AAPL",
+      "MSFT",
+      "NVDA",
+      "AMZN",
+      "GOOGL",
+      "META",
+      "RELIANCE.NS",
+      "TCS.NS",
+      "INFY.NS",
+      "HDFCBANK.NS"
+    ],
+    "data_csv_path": null
+  },
+  "data_warnings": [
+    "AMZN: available daily coverage starts at 2018-01-02 (requested from 2018-01-01).",
+    "GOOGL: available daily coverage starts at 2018-01-02 (requested from 2018-01-01).",
+    "META: available daily coverage starts at 2018-01-02 (requested from 2018-01-01).",
+    "MSFT: available daily coverage starts at 2018-01-02 (requested from 2018-01-01).",
+    "AAPL: available daily coverage starts at 2018-01-02 (requested from 2018-01-01).",
+    "NVDA: available daily coverage starts at 2018-01-02 (requested from 2018-01-01).",
+    "TCS.NS: available daily coverage starts at 2018-01-02 (requested from 2018-01-01).",
+    "RELIANCE.NS: available daily coverage starts at 2018-01-02 (requested from 2018-01-01)."
+  ],
+  "classification_metrics": {
+    "accuracy": 0.5119,
+    "precision": 0.532319,
+    "recall": 0.616566,
+    "confusion_matrix": [
+      [
+        1866,
+        2858
+      ],
+      [
+        2023,
+        3253
+      ]
+    ],
+    "support": 10000
+  },
+  "directional_trade_metrics": {
+    "directional_hit_rate": 0.51114,
+    "samples": 5341
+  },
+  "performance_metrics": {
+    "total_return_pct": -32.8842,
+    "sharpe_ratio": -0.473522,
+    "max_drawdown_pct": -37.1484,
+    "win_rate_pct": 48.2544,
+    "profit_factor": 0.871476
+  },
+  "benchmark_comparison": {
+    "buy_and_hold_return_pct": 197.9451,
+    "excess_return_pct": -230.8293
+  },
+  "walk_forward_folds": [
+    {
+      "fold_id": 1,
+      "window_start": "2022-01-01T00:00:00+00:00",
+      "window_end": "2022-04-01T00:00:00+00:00",
+      "train_rows": 9840,
+      "test_rows": 618,
+      "skipped": false,
+      "accuracy": 0.495146,
+      "auc": 0.516166,
+      "signal_count": 387
+    },
+    {
+      "fold_id": 2,
+      "window_start": "2022-04-01T00:00:00+00:00",
+      "window_end": "2022-07-01T00:00:00+00:00",
+      "train_rows": 10458,
+      "test_rows": 620,
+      "skipped": false,
+      "accuracy": 0.525806,
+      "auc": 0.531132,
+      "signal_count": 456
+    },
+    {
+      "fold_id": 3,
+      "window_start": "2022-07-01T00:00:00+00:00",
+      "window_end": "2022-10-01T00:00:00+00:00",
+      "train_rows": 11078,
+      "test_rows": 638,
+      "skipped": false,
+      "accuracy": 0.481191,
+      "auc": 0.504621,
+      "signal_count": 222
+    },
+    {
+      "fold_id": 4,
+      "window_start": "2022-10-01T00:00:00+00:00",
+      "window_end": "2023-01-01T00:00:00+00:00",
+      "train_rows": 11716,
+      "test_rows": 628,
+      "skipped": false,
+      "accuracy": 0.447452,
+      "auc": 0.488994,
+      "signal_count": 401
+    },
+    {
+      "fold_id": 5,
+      "window_start": "2023-01-01T00:00:00+00:00",
+      "window_end": "2023-04-01T00:00:00+00:00",
+      "train_rows": 12344,
+      "test_rows": 620,
+      "skipped": false,
+      "accuracy": 0.537097,
+      "auc": 0.476942,
+      "signal_count": 416
+    },
+    {
+      "fold_id": 6,
+      "window_start": "2023-04-01T00:00:00+00:00",
+      "window_end": "2023-07-01T00:00:00+00:00",
+      "train_rows": 12964,
+      "test_rows": 616,
+      "skipped": false,
+      "accuracy": 0.534091,
+      "auc": 0.483536,
+      "signal_count": 357
+    },
+    {
+      "fold_id": 7,
+      "window_start": "2023-07-01T00:00:00+00:00",
+      "window_end": "2023-10-01T00:00:00+00:00",
+      "train_rows": 13580,
+      "test_rows": 630,
+      "skipped": false,
+      "accuracy": 0.501587,
+      "auc": 0.495501,
+      "signal_count": 433
+    },
+    {
+      "fold_id": 8,
+      "window_start": "2023-10-01T00:00:00+00:00",
+      "window_end": "2024-01-01T00:00:00+00:00",
+      "train_rows": 14210,
+      "test_rows": 624,
+      "skipped": false,
+      "accuracy": 0.560897,
+      "auc": 0.511678,
+      "signal_count": 223
+    },
+    {
+      "fold_id": 9,
+      "window_start": "2024-01-01T00:00:00+00:00",
+      "window_end": "2024-04-01T00:00:00+00:00",
+      "train_rows": 14834,
+      "test_rows": 608,
+      "skipped": false,
+      "accuracy": 0.452303,
+      "auc": 0.503819,
+      "signal_count": 353
+    },
+    {
+      "fold_id": 10,
+      "window_start": "2024-04-01T00:00:00+00:00",
+      "window_end": "2024-07-01T00:00:00+00:00",
+      "train_rows": 15442,
+      "test_rows": 624,
+      "skipped": false,
+      "accuracy": 0.525641,
+      "auc": 0.512302,
+      "signal_count": 205
+    },
+    {
+      "fold_id": 11,
+      "window_start": "2024-07-01T00:00:00+00:00",
+      "window_end": "2024-10-01T00:00:00+00:00",
+      "train_rows": 16066,
+      "test_rows": 640,
+      "skipped": false,
+      "accuracy": 0.509375,
+      "auc": 0.494618,
+      "signal_count": 263
+    },
+    {
+      "fold_id": 12,
+      "window_start": "2024-10-01T00:00:00+00:00",
+      "window_end": "2025-01-01T00:00:00+00:00",
+      "train_rows": 16706,
+      "test_rows": 636,
+      "skipped": false,
+      "accuracy": 0.507862,
+      "auc": 0.508099,
+      "signal_count": 396
+    },
+    {
+      "fold_id": 13,
+      "window_start": "2025-01-01T00:00:00+00:00",
+      "window_end": "2025-04-01T00:00:00+00:00",
+      "train_rows": 17342,
+      "test_rows": 604,
+      "skipped": false,
+      "accuracy": 0.518212,
+      "auc": 0.506077,
+      "signal_count": 364
+    },
+    {
+      "fold_id": 14,
+      "window_start": "2025-04-01T00:00:00+00:00",
+      "window_end": "2025-07-01T00:00:00+00:00",
+      "train_rows": 17946,
+      "test_rows": 618,
+      "skipped": false,
+      "accuracy": 0.553398,
+      "auc": 0.514765,
+      "signal_count": 312
+    },
+    {
+      "fold_id": 15,
+      "window_start": "2025-07-01T00:00:00+00:00",
+      "window_end": "2025-10-01T00:00:00+00:00",
+      "train_rows": 18564,
+      "test_rows": 640,
+      "skipped": false,
+      "accuracy": 0.521875,
+      "auc": 0.521704,
+      "signal_count": 136
+    },
+    {
+      "fold_id": 16,
+      "window_start": "2025-10-01T00:00:00+00:00",
+      "window_end": "2026-01-01T00:00:00+00:00",
+      "train_rows": 19204,
+      "test_rows": 636,
+      "skipped": false,
+      "accuracy": 0.518868,
+      "auc": 0.494277,
+      "signal_count": 417
+    }
+  ],
+  "artifacts": {
+    "run_dir": "artifacts\\20260718_161619",
+    "latest_dir": "artifacts\\latest",
+    "files": {
+      "predictions_csv": {
+        "run_path": "artifacts\\20260718_161619\\predictions.csv",
+        "latest_path": "artifacts\\latest\\predictions.csv"
+      },
+      "trade_log_csv": {
+        "run_path": "artifacts\\20260718_161619\\trade_log.csv",
+        "latest_path": "artifacts\\latest\\trade_log.csv"
+      },
+      "equity_curve_csv": {
+        "run_path": "artifacts\\20260718_161619\\equity_curve.csv",
+        "latest_path": "artifacts\\latest\\equity_curve.csv"
+      },
+      "benchmark_curve_csv": {
+        "run_path": "artifacts\\20260718_161619\\benchmark_curve.csv",
+        "latest_path": "artifacts\\latest\\benchmark_curve.csv"
+      }
+    },
+    "plots": {
+      "run": {
+        "equity_curve_plot": "artifacts\\20260718_161619\\plots\\equity_curve.html",
+        "drawdown_plot": "artifacts\\20260718_161619\\plots\\drawdown_curve.html",
+        "trade_marker_plot": "artifacts\\20260718_161619\\plots\\trade_markers.html"
+      },
+      "latest": {
+        "equity_curve_plot": "artifacts\\latest\\plots\\equity_curve.html",
+        "drawdown_plot": "artifacts\\latest\\plots\\drawdown_curve.html",
+        "trade_marker_plot": "artifacts\\latest\\plots\\trade_markers.html"
+      }
+    },
+    "model": {
+      "saved": false
+    }
+  }
+}

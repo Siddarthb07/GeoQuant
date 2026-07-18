@@ -92,14 +92,26 @@ If PowerShell blocks scripts, use `.\run_all.bat` or run:
 Set-ExecutionPolicy -Scope Process Bypass
 ```
 
+## Measured walk-forward (public)
+
+First committed cost-aware run: **[`results/2026-07-18_daily_v1/`](./results/2026-07-18_daily_v1/)**.
+
+| Sharpe | Max drawdown | Directional hit | Test window |
+|--------|--------------|-----------------|-------------|
+| **−0.47** | **37.1%** | **51.1%** | 2022 → 2025 |
+
+Negative risk-adjusted return vs buy-and-hold on this basket — expected for a first public baseline with fees/slippage inside the optimizer. Full writeup: [`results/README.md`](./results/README.md). Repro: `python train.py --config config.results_daily.yaml --no-persist-model`.
+
 ## Reproducible research
 
 ```powershell
 cd backend
 .\.venv\Scripts\python.exe train.py --config config.yaml
+# public measured daily run:
+.\.venv\Scripts\python.exe train.py --config config.results_daily.yaml --no-persist-model
 ```
 
-Outputs land in `backend/artifacts/latest/`:
+Outputs land in `backend/artifacts/latest/` (gitignored). Public copies of measured runs live under [`results/`](./results/).
 
 | File | Description |
 |------|-------------|

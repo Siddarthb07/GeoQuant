@@ -23,6 +23,7 @@ INTRADAY_PERIOD_BY_INTERVAL = {
     "60m": "730d",
     "1h": "730d",
 }
+DAILY_INTERVALS = {"1d", "1day", "daily"}
 MIN_SUCCESSFUL_SYMBOLS = 3
 YFINANCE_TIMEOUT_SECONDS = 15
 YFINANCE_MAX_RETRIES = 2
@@ -114,28 +115,45 @@ def _ensure_market_columns(frame: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def _fetch_single_symbol_intraday(
+def _fetch_single_symbol_bars(
     symbol: str,
     yf_interval: str,
-    period: str,
+    period: Optional[str],
     requested_start_ts: pd.Timestamp,
     requested_end_ts: pd.Timestamp,
+    *,
+    use_start_end: bool = False,
 ) -> Tuple[Optional[pd.DataFrame], List[str]]:
     warnings: List[str] = []
     fetch_symbol = resolve_yfinance_symbol(symbol)
     last_error: Optional[Exception] = None
+    coverage_label = "daily" if use_start_end else "intraday"
 
     for attempt in range(YFINANCE_MAX_RETRIES):
         try:
-            raw = yf.download(
-                fetch_symbol,
-                period=period,
-                interval=yf_interval,
-                progress=False,
-                auto_adjust=False,
-                threads=False,
-                timeout=YFINANCE_TIMEOUT_SECONDS,
-            )
+            if use_start_end:
+                # End is exclusive in yfinance; pad one day so the last session is included.
+                end_exclusive = (requested_end_ts + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
+                raw = yf.download(
+                    fetch_symbol,
+                    start=requested_start_ts.strftime("%Y-%m-%d"),
+                    end=end_exclusive,
+                    interval=yf_interval,
+                    progress=False,
+                    auto_adjust=False,
+                    threads=False,
+                    timeout=YFINANCE_TIMEOUT_SECONDS,
+                )
+            else:
+                raw = yf.download(
+                    fetch_symbol,
+                    period=period,
+                    interval=yf_interval,
+                    progress=False,
+                    auto_adjust=False,
+                    threads=False,
+                    timeout=YFINANCE_TIMEOUT_SECONDS,
+                )
             if raw.empty:
                 last_error = RuntimeError("empty frame")
                 sleep(1.0 * (attempt + 1))
@@ -149,17 +167,21 @@ def _fetch_single_symbol_intraday(
             coverage_start = norm["timestamp"].min()
             coverage_end = norm["timestamp"].max()
             if coverage_start is not None and coverage_start > requested_start_ts:
+                limit_note = (
+                    " Free 5m feed has historical limits."
+                    if not use_start_end
+                    else ""
+                )
                 warnings.append(
                     (
-                        f"{symbol}: available intraday coverage starts at {coverage_start.date()} "
-                        f"(requested from {requested_start_ts.date()}). "
-                        "Free 5m feed has historical limits."
+                        f"{symbol}: available {coverage_label} coverage starts at {coverage_start.date()} "
+                        f"(requested from {requested_start_ts.date()}).{limit_note}"
                     )
                 )
             if coverage_end is not None and coverage_end < requested_end_ts:
                 warnings.append(
                     (
-                        f"{symbol}: available intraday coverage ends at {coverage_end.date()} "
+                        f"{symbol}: available {coverage_label} coverage ends at {coverage_end.date()} "
                         f"(requested through {requested_end_ts.date()})."
                     )
                 )
@@ -170,13 +192,13 @@ def _fetch_single_symbol_intraday(
             sleep(1.0 * (attempt + 1))
 
     if last_error is not None:
-        warnings.append(f"{symbol}: intraday fetch failed ({last_error}).")
+        warnings.append(f"{symbol}: {coverage_label} fetch failed ({last_error}).")
     else:
-        warnings.append(f"{symbol}: no intraday bars returned for interval={yf_interval}.")
+        warnings.append(f"{symbol}: no {coverage_label} bars returned for interval={yf_interval}.")
     return None, warnings
 
 
-def _fetch_yfinance_intraday(
+def _fetch_yfinance_market(
     symbols: List[str],
     interval: str,
     requested_start: str,
@@ -185,9 +207,14 @@ def _fetch_yfinance_intraday(
     rows: List[pd.DataFrame] = []
     warnings: List[str] = []
     yf_interval = str(interval or "5m").lower()
+    if yf_interval in {"1day", "daily"}:
+        yf_interval = "1d"
     if yf_interval == "1h":
         yf_interval = "60m"
-    period = INTRADAY_PERIOD_BY_INTERVAL.get(yf_interval, "60d")
+
+    use_start_end = yf_interval in DAILY_INTERVALS
+    period = None if use_start_end else INTRADAY_PERIOD_BY_INTERVAL.get(yf_interval, "60d")
+    feed_label = "daily" if use_start_end else "intraday"
 
     requested_start_ts = pd.Timestamp(requested_start, tz="UTC")
     requested_end_ts = pd.Timestamp(requested_end, tz="UTC")
@@ -196,12 +223,13 @@ def _fetch_yfinance_intraday(
     with ThreadPoolExecutor(max_workers=max_workers) as pool:
         futures = {
             pool.submit(
-                _fetch_single_symbol_intraday,
+                _fetch_single_symbol_bars,
                 symbol,
                 yf_interval,
                 period,
                 requested_start_ts,
                 requested_end_ts,
+                use_start_end=use_start_end,
             ): symbol
             for symbol in symbols
         }
@@ -217,7 +245,7 @@ def _fetch_yfinance_intraday(
     successful_symbols = {frame["symbol"].iloc[0] for frame in rows if not frame.empty}
     if len(successful_symbols) < MIN_SUCCESSFUL_SYMBOLS:
         raise RuntimeError(
-            f"Only {len(successful_symbols)} symbol(s) returned intraday data; need at least "
+            f"Only {len(successful_symbols)} symbol(s) returned {feed_label} data; need at least "
             f"{MIN_SUCCESSFUL_SYMBOLS}. Retry later, reduce the symbol list, or provide a CSV."
         )
 
@@ -239,7 +267,7 @@ def load_market_data(
         frame = pd.read_csv(path)
         data = _ensure_market_columns(frame)
         return data, []
-    data, warnings = _fetch_yfinance_intraday(
+    data, warnings = _fetch_yfinance_market(
         symbols=symbols,
         interval=interval,
         requested_start=start_date,
@@ -247,7 +275,7 @@ def load_market_data(
     )
     if data.empty:
         raise RuntimeError(
-            "Unable to load intraday market data from free feeds. Provide a CSV with "
+            "Unable to load market data from free feeds. Provide a CSV with "
             "columns: timestamp,symbol,open,high,low,close,volume."
         )
     return data, warnings
