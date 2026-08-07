@@ -2,7 +2,9 @@
 
 [![Release](https://img.shields.io/github/v/release/Siddarthb07/GeoQuant?label=v1.0)](https://github.com/Siddarthb07/GeoQuant/releases/tag/v1.0)
 
-Full-stack trading intelligence platform for **US + India** equities. GeoQuant combines neural-network signal models, global news sentiment, walk-forward research, and a live trading dashboard in one FastAPI app.
+**Keywords:** quantitative trading · algorithmic trading · FastAPI · PyTorch · Alpaca · backtesting · sentiment analysis · walk-forward validation
+
+Full-stack **quantitative / algorithmic trading** platform for **US + India** equities. GeoQuant combines neural-network signal models, global news sentiment analysis, walk-forward backtesting research, and a live trading dashboard (Alpaca paper/live) in one FastAPI app.
 
 ## v1.0 highlights
 
