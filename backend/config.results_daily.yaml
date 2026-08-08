@@ -30,6 +30,8 @@ validation:
 model:
   buy_threshold: 0.55
   sell_threshold: 0.45
+  signal_mode: model
+  feature_set: auto
   epochs: 40
   batch_size: 256
   learning_rate: 0.001
@@ -39,6 +41,7 @@ costs:
   position_fraction: 0.10
   brokerage_fee_bps: 10
   slippage_bps: 5
+  allow_short: true
 
 outputs:
   output_dir: "artifacts"

@@ -11,7 +11,12 @@ import pandas as pd
 import yfinance as yf
 
 from app.core.config import resolve_yfinance_symbol
-from app.services.feature_engineering import INTRADAY_FEATURE_COLUMNS, add_technical_features
+from app.services.feature_engineering import (
+    DAILY_FEATURE_COLUMNS,
+    INTRADAY_FEATURE_COLUMNS,
+    add_technical_features,
+    make_economic_target,
+)
 
 
 INTRADAY_PERIOD_BY_INTERVAL = {
@@ -281,9 +286,20 @@ def load_market_data(
     return data, warnings
 
 
-def build_intraday_feature_dataset(market_data: pd.DataFrame) -> Tuple[pd.DataFrame, Dict[str, int]]:
+def build_intraday_feature_dataset(
+    market_data: pd.DataFrame,
+    *,
+    feature_columns: Optional[List[str]] = None,
+    label_edge: float = 0.0,
+    require_sma200: bool = False,
+) -> Tuple[pd.DataFrame, Dict[str, int]]:
     if market_data.empty:
         raise ValueError("Market data is empty; cannot build feature dataset.")
+
+    columns = list(feature_columns or INTRADAY_FEATURE_COLUMNS)
+    drop_subset = columns + ["target_up", "close", "trend_ok"]
+    if require_sma200:
+        drop_subset.append("trend_long")
 
     symbols = sorted(market_data["symbol"].unique().tolist())
     symbol_to_code = {sym: idx for idx, sym in enumerate(symbols)}
@@ -301,10 +317,12 @@ def build_intraday_feature_dataset(market_data: pd.DataFrame) -> Tuple[pd.DataFr
         feats = add_technical_features(local)
         feats["symbol"] = symbol
         feats["symbol_code"] = symbol_to_code[symbol]
-        feats["target_up"] = (feats["close"].shift(-1) > feats["close"]).astype(int)
+        if "news_sentiment" in columns and "news_sentiment" not in feats.columns:
+            feats["news_sentiment"] = 0.0
+        feats["target_up"] = make_economic_target(feats["fwd_ret_1"], label_edge)
         feats["timestamp"] = feats.index
         feats = feats.replace([np.inf, -np.inf], np.nan)
-        feats = feats.dropna(subset=INTRADAY_FEATURE_COLUMNS + ["target_up", "close"])
+        feats = feats.dropna(subset=drop_subset)
         if feats.empty:
             continue
         frames.append(feats.reset_index(drop=True))
@@ -325,6 +343,10 @@ def load_research_dataset(
     interval: str,
     start_date: str,
     end_date: str,
+    *,
+    feature_columns: Optional[List[str]] = None,
+    label_edge: float = 0.0,
+    require_sma200: bool = False,
 ) -> ResearchDataset:
     market_data, warnings = load_market_data(
         csv_path=csv_path,
@@ -333,7 +355,17 @@ def load_research_dataset(
         start_date=start_date,
         end_date=end_date,
     )
-    features, symbol_to_code = build_intraday_feature_dataset(market_data)
+    yf_interval = str(interval or "5m").lower()
+    if yf_interval in {"1day", "daily"}:
+        yf_interval = "1d"
+    if feature_columns is None and yf_interval in DAILY_INTERVALS:
+        feature_columns = list(DAILY_FEATURE_COLUMNS)
+    features, symbol_to_code = build_intraday_feature_dataset(
+        market_data,
+        feature_columns=feature_columns,
+        label_edge=label_edge,
+        require_sma200=require_sma200,
+    )
     return ResearchDataset(
         market_data=market_data,
         features=features,
