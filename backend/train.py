@@ -42,6 +42,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--learning-rate", type=float, default=None, help="Model learning rate.")
     parser.add_argument("--output-dir", default=None, help="Artifacts output directory.")
     parser.add_argument("--no-persist-model", action="store_true", help="Do not save trained model artifacts.")
+    parser.add_argument("--allow-short", dest="allow_short", action="store_true", default=None, help="Enable short selling.")
+    parser.add_argument("--no-short", dest="allow_short", action="store_false", help="Long-only backtest.")
+    parser.add_argument("--use-trend-filter", dest="use_trend_filter", action="store_true", default=None, help="Require price>SMA50 for longs.")
+    parser.add_argument("--min-hold-bars", type=int, default=None, help="Minimum bars to hold a position.")
+    parser.add_argument("--label-edge-bps", type=float, default=None, help="Forward-return label hurdle in bps.")
     return parser.parse_args()
 
 
@@ -60,6 +65,10 @@ def main() -> int:
         "batch_size": _optional_int(args.batch_size),
         "learning_rate": _optional_float(args.learning_rate),
         "output_dir": args.output_dir,
+        "allow_short": args.allow_short,
+        "use_trend_filter": args.use_trend_filter,
+        "min_hold_bars": _optional_int(args.min_hold_bars),
+        "label_edge_bps": _optional_float(args.label_edge_bps),
     }
     if args.no_persist_model:
         overrides["persist_model"] = False

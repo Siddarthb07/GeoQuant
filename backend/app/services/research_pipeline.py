@@ -14,7 +14,7 @@ from sklearn.preprocessing import StandardScaler
 
 from app.core.config import resolve_yfinance_symbol, settings
 from app.services.backtest_engine import BacktestConfig
-from app.services.feature_engineering import INTRADAY_FEATURE_COLUMNS
+from app.services.feature_engineering import DAILY_FEATURE_COLUMNS, INTRADAY_FEATURE_COLUMNS
 from app.services.neural_model import train_binary_classifier
 from app.services.research_data import ResearchDataset, load_research_dataset
 from app.services.visualization_service import create_visualizations
@@ -37,6 +37,22 @@ class ResearchRunConfig:
     position_fraction: float = 0.10
     brokerage_fee_bps: float = 10.0
     slippage_bps: float = 5.0
+    allow_short: bool = True
+    use_trend_filter: bool = False
+    require_long_trend: bool = False
+    min_hold_bars: int = 1
+    label_edge_bps: float = 0.0
+    feature_set: str = "auto"  # auto | daily | intraday
+    signal_mode: str = "model"  # model | trend_only | trend_primary
+    top_n: int = 0
+    rank_col: str = "risk_adj_mom"
+    rebalance_every: int = 1
+    vol_target_annual: float = 0.0
+    max_position_fraction: float = 0.35
+    portfolio_vol_target: float = 0.0
+    portfolio_vol_lookback: int = 20
+    max_leverage: float = 2.0
+    gross_exposure: float = 0.0
     random_seed: int = 42
     output_dir: str = "artifacts"
     persist_model: bool = True
@@ -46,6 +62,24 @@ class ResearchRunConfig:
     min_train_rows: int = 800
     min_test_rows: int = 100
     periods_per_year: int = 19656
+
+    @property
+    def label_edge(self) -> float:
+        return max(0.0, float(self.label_edge_bps)) / 10000.0
+
+    @property
+    def is_daily(self) -> bool:
+        return str(self.interval).lower() in {"1d", "1day", "daily"}
+
+    def resolve_feature_columns(self) -> List[str]:
+        mode = str(self.feature_set or "auto").strip().lower()
+        if mode == "daily":
+            return list(DAILY_FEATURE_COLUMNS)
+        if mode == "intraday":
+            return list(INTRADAY_FEATURE_COLUMNS)
+        # Preserve the published daily_v1 baseline: daily interval historically used the
+        # intraday column set. Opt into DAILY_FEATURE_COLUMNS via feature_set: daily.
+        return list(INTRADAY_FEATURE_COLUMNS)
 
 
 def _resolve_validation_dates(
@@ -148,6 +182,22 @@ def load_pipeline_config(config_path: str, overrides: Optional[Dict] = None) -> 
         position_fraction=float(costs.get("position_fraction", 0.10)),
         brokerage_fee_bps=float(costs.get("brokerage_fee_bps", 10.0)),
         slippage_bps=float(costs.get("slippage_bps", 5.0)),
+        allow_short=bool(costs.get("allow_short", True)),
+        use_trend_filter=bool(model.get("use_trend_filter", False)),
+        require_long_trend=bool(model.get("require_long_trend", False)),
+        min_hold_bars=int(model.get("min_hold_bars", 1)),
+        label_edge_bps=float(model.get("label_edge_bps", 0.0)),
+        feature_set=str(model.get("feature_set", "auto")),
+        signal_mode=str(model.get("signal_mode", "model")),
+        top_n=int(model.get("top_n", 0)),
+        rank_col=str(model.get("rank_col", "risk_adj_mom")),
+        rebalance_every=int(model.get("rebalance_every", 1)),
+        vol_target_annual=float(costs.get("vol_target_annual", 0.0)),
+        max_position_fraction=float(costs.get("max_position_fraction", 0.35)),
+        portfolio_vol_target=float(costs.get("portfolio_vol_target", 0.0)),
+        portfolio_vol_lookback=int(costs.get("portfolio_vol_lookback", 20)),
+        max_leverage=float(costs.get("max_leverage", 2.0)),
+        gross_exposure=float(costs.get("gross_exposure", 0.0)),
         random_seed=int(pipeline.get("random_seed", 42)),
         output_dir=str(outputs.get("output_dir", "artifacts")),
         persist_model=bool(outputs.get("persist_model", True)),
@@ -256,12 +306,16 @@ def _write_csv_dual(frame: pd.DataFrame, run_dir: Path, latest_dir: Path, name: 
 
 def run_research_pipeline(config: ResearchRunConfig) -> Dict:
     np.random.seed(int(config.random_seed))
+    feature_columns = config.resolve_feature_columns()
     dataset = load_research_dataset(
         csv_path=config.data_csv_path,
         symbols=config.symbols,
         interval=config.interval,
         start_date=config.train_start,
         end_date=config.test_end,
+        feature_columns=feature_columns,
+        label_edge=config.label_edge,
+        require_sma200=config.require_long_trend,
     )
 
     effective_train_start, effective_test_start, effective_test_end, date_warnings = _resolve_validation_dates(
@@ -284,20 +338,34 @@ def run_research_pipeline(config: ResearchRunConfig) -> Dict:
         epochs=config.epochs,
         batch_size=config.batch_size,
         learning_rate=config.learning_rate,
+        allow_short=config.allow_short,
+        use_trend_filter=config.use_trend_filter,
+        require_long_trend=config.require_long_trend,
+        min_hold_bars=config.min_hold_bars,
+        signal_mode=config.signal_mode,
+        top_n=config.top_n,
+        rank_col=config.rank_col,
+        rebalance_every=config.rebalance_every,
+        gross_exposure=config.gross_exposure,
+        max_position_fraction=config.max_position_fraction,
     )
     bt_cfg = BacktestConfig(
         initial_capital=config.initial_capital,
         position_fraction=config.position_fraction,
         brokerage_fee_bps=config.brokerage_fee_bps,
         slippage_bps=config.slippage_bps,
-        allow_short=True,
+        allow_short=config.allow_short,
+        vol_target_annual=config.vol_target_annual,
+        max_position_fraction=config.max_position_fraction,
+        portfolio_vol_target=config.portfolio_vol_target,
+        portfolio_vol_lookback=config.portfolio_vol_lookback,
+        max_leverage=config.max_leverage,
         timestamp_col="timestamp",
         symbol_col="symbol",
         price_col="close",
         signal_col="signal",
     )
 
-    feature_columns = list(INTRADAY_FEATURE_COLUMNS)
     result = run_walk_forward_validation(
         feature_frame=dataset.features,
         feature_columns=feature_columns,
@@ -369,6 +437,18 @@ def run_research_pipeline(config: ResearchRunConfig) -> Dict:
             "position_fraction": config.position_fraction,
             "brokerage_fee_bps": config.brokerage_fee_bps,
             "slippage_bps": config.slippage_bps,
+            "allow_short": config.allow_short,
+            "use_trend_filter": config.use_trend_filter,
+            "require_long_trend": config.require_long_trend,
+            "min_hold_bars": config.min_hold_bars,
+            "label_edge_bps": config.label_edge_bps,
+            "feature_columns": feature_columns,
+            "signal_mode": config.signal_mode,
+            "top_n": config.top_n,
+            "rank_col": config.rank_col,
+            "rebalance_every": config.rebalance_every,
+            "vol_target_annual": config.vol_target_annual,
+            "max_position_fraction": config.max_position_fraction,
             "symbols": config.symbols,
             "data_csv_path": config.data_csv_path,
         },

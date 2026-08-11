@@ -14,6 +14,15 @@ class BacktestConfig:
     brokerage_fee_bps: float = 10.0
     slippage_bps: float = 5.0
     allow_short: bool = True
+    # If > 0, scale each new position by target_vol / realized_vol (clipped).
+    vol_target_annual: float = 0.0
+    max_position_fraction: float = 0.35
+    # Scale overnight book so trailing equity vol ≈ this target (0 = off).
+    portfolio_vol_target: float = 0.0
+    portfolio_vol_lookback: int = 20
+    max_leverage: float = 2.0
+    vol_col: str = "vol_20"
+    weight_col: str = "weight"
     timestamp_col: str = "timestamp"
     symbol_col: str = "symbol"
     price_col: str = "close"
@@ -63,6 +72,29 @@ def _exit_execution_price(price: float, side: int, slippage_rate: float) -> floa
     return float(price * (1.0 + slippage_rate))
 
 
+def _position_fraction_for_row(row: pd.Series, cfg: BacktestConfig) -> float:
+    base = float(max(0.0, cfg.position_fraction))
+    weight = row.get(cfg.weight_col, np.nan)
+    if weight is not None and np.isfinite(float(weight)) and float(weight) > 0:
+        base = float(weight)
+
+    if cfg.vol_target_annual <= 0:
+        return min(base, float(cfg.max_position_fraction))
+
+    vol = row.get(cfg.vol_col, np.nan)
+    try:
+        daily_vol = float(vol)
+    except (TypeError, ValueError):
+        daily_vol = float("nan")
+    if not np.isfinite(daily_vol) or daily_vol <= 1e-8:
+        return min(base, float(cfg.max_position_fraction))
+
+    ann_vol = daily_vol * float(np.sqrt(252.0))
+    scale = float(cfg.vol_target_annual) / ann_vol
+    sized = base * scale
+    return float(min(max(sized, 0.0), float(cfg.max_position_fraction)))
+
+
 def _open_position(
     symbol: str,
     timestamp: pd.Timestamp,
@@ -73,10 +105,12 @@ def _open_position(
     cfg: BacktestConfig,
     positions: Dict[str, Dict],
     trade_log: List[Dict],
+    position_fraction: Optional[float] = None,
 ) -> float:
     if equity_now <= 0:
         return cash
-    notional = float(max(0.0, equity_now * cfg.position_fraction))
+    frac = float(cfg.position_fraction if position_fraction is None else position_fraction)
+    notional = float(max(0.0, equity_now * frac))
     if notional <= 0:
         return cash
 
@@ -177,6 +211,10 @@ def _prepare_input(frame: pd.DataFrame, cfg: BacktestConfig) -> pd.DataFrame:
     out = frame.copy()
     out[cfg.timestamp_col] = pd.to_datetime(out[cfg.timestamp_col], utc=True, errors="coerce")
     out[cfg.price_col] = pd.to_numeric(out[cfg.price_col], errors="coerce")
+    if cfg.vol_col in out.columns:
+        out[cfg.vol_col] = pd.to_numeric(out[cfg.vol_col], errors="coerce")
+    if cfg.weight_col in out.columns:
+        out[cfg.weight_col] = pd.to_numeric(out[cfg.weight_col], errors="coerce")
     out = out.dropna(subset=[cfg.timestamp_col, cfg.symbol_col, cfg.price_col]).copy()
     out[cfg.symbol_col] = out[cfg.symbol_col].astype(str).str.strip()
     out = out[out[cfg.symbol_col] != ""].copy()
@@ -240,11 +278,24 @@ def run_backtest(frame: pd.DataFrame, cfg: Optional[BacktestConfig] = None) -> D
     last_prices: Dict[str, float] = {}
     equity_points: List[Dict] = []
     trade_log: List[Dict] = []
+    equity_history: List[float] = [float(config.initial_capital)]
+    leverage = 1.0
 
     grouped = data.groupby(config.timestamp_col, sort=True)
     last_timestamp: Optional[pd.Timestamp] = None
     for timestamp, rows in grouped:
         last_timestamp = timestamp
+
+        if config.portfolio_vol_target > 0 and len(equity_history) >= max(5, int(config.portfolio_vol_lookback)):
+            lookback = max(5, int(config.portfolio_vol_lookback))
+            window = pd.Series(equity_history[-lookback:])
+            rets = window.pct_change().dropna()
+            if len(rets) >= 5:
+                realized = float(rets.std(ddof=0) * np.sqrt(252.0))
+                if realized > 1e-8:
+                    leverage = float(config.portfolio_vol_target) / realized
+                    leverage = float(np.clip(leverage, 0.0, float(config.max_leverage)))
+
         for _, row in rows.iterrows():
             symbol = str(row[config.symbol_col])
             px = float(row[config.price_col])
@@ -263,6 +314,8 @@ def run_backtest(frame: pd.DataFrame, cfg: Optional[BacktestConfig] = None) -> D
 
             if current is None and target_side != 0:
                 equity_now = _mark_to_market(cash, positions, last_prices)
+                frac = _position_fraction_for_row(row, config) * leverage
+                frac = min(frac, float(config.max_position_fraction))
                 cash = _open_position(
                     symbol=symbol,
                     timestamp=timestamp,
@@ -273,10 +326,12 @@ def run_backtest(frame: pd.DataFrame, cfg: Optional[BacktestConfig] = None) -> D
                     cfg=config,
                     positions=positions,
                     trade_log=trade_log,
+                    position_fraction=frac,
                 )
 
         equity_now = _mark_to_market(cash, positions, last_prices)
         equity_points.append({"timestamp": timestamp, "equity": float(equity_now)})
+        equity_history.append(float(equity_now))
 
     if last_timestamp is not None:
         for symbol in list(positions.keys()):

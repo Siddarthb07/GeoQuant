@@ -98,6 +98,46 @@ def summarize_performance(
     )
 
 
+def apply_vol_targeted_equity(
+    equity_curve: pd.DataFrame,
+    *,
+    target_vol: float,
+    lookback: int = 20,
+    max_leverage: float = 2.0,
+    cost_bps: float = 15.0,
+    timestamp_col: str = "timestamp",
+    equity_col: str = "equity",
+) -> pd.DataFrame:
+    """
+    Rebuild equity by applying lagged constant-vol leverage to daily strategy returns.
+
+    leverage_t = clip(target_vol / realized_vol_t, 0, max_leverage)
+    r_vt_t = leverage_{t-1} * r_t - |leverage_t - leverage_{t-1}| * cost
+    """
+    if equity_curve is None or equity_curve.empty or target_vol <= 0:
+        return equity_curve
+
+    frame = equity_curve[[timestamp_col, equity_col]].copy().sort_values(timestamp_col).reset_index(drop=True)
+    rets = frame[equity_col].pct_change()
+    realized = rets.rolling(max(5, int(lookback))).std(ddof=0) * float(np.sqrt(252.0))
+    leverage = (float(target_vol) / realized.replace(0, np.nan)).clip(lower=0.0, upper=float(max_leverage))
+    leverage = leverage.replace([np.inf, -np.inf], np.nan).fillna(1.0)
+    lagged = leverage.shift(1).fillna(1.0)
+    turnover = (leverage - lagged).abs().fillna(0.0)
+    cost = turnover * (float(max(0.0, cost_bps)) / 10000.0)
+    vt_rets = lagged * rets.fillna(0.0) - cost
+    vt_rets.iloc[0] = 0.0
+
+    start = float(frame[equity_col].iloc[0])
+    vt_equity = start * (1.0 + vt_rets).cumprod()
+    out = frame.copy()
+    out[equity_col] = vt_equity.to_numpy(dtype=float)
+    if "drawdown_pct" in equity_curve.columns or True:
+        running_max = out[equity_col].cummax().replace(0, np.nan)
+        out["drawdown_pct"] = (out[equity_col] / running_max - 1.0) * 100.0
+    return out
+
+
 def compute_classification_metrics(y_true: List[int], y_pred: List[int]) -> Dict:
     if not y_true:
         return {
