@@ -1,0 +1,307 @@
+{
+  "run_at_utc": "2026-08-17T16:56:43.499422+00:00",
+  "config": {
+    "train_start": "2018-01-01",
+    "test_start": "2022-01-01",
+    "test_end": "2025-12-31",
+    "effective_train_start": "2018-03-14",
+    "effective_test_start": "2022-01-01",
+    "effective_test_end": "2025-12-31",
+    "interval": "1d",
+    "step_months": 3,
+    "buy_threshold": 0.55,
+    "sell_threshold": 0.45,
+    "initial_capital": 100000.0,
+    "position_fraction": 0.12,
+    "brokerage_fee_bps": 10.0,
+    "slippage_bps": 5.0,
+    "allow_short": false,
+    "use_trend_filter": true,
+    "require_long_trend": true,
+    "min_hold_bars": 21,
+    "label_edge_bps": 20.0,
+    "feature_columns": [
+      "ret_1",
+      "ret_3",
+      "ret_5",
+      "ret_10",
+      "vol_5",
+      "vol_20",
+      "sma_ratio_10_20",
+      "sma_ratio_20_50",
+      "rsi_14",
+      "macd",
+      "macd_signal",
+      "macd_hist",
+      "atr_pct",
+      "volume_z",
+      "symbol_code"
+    ],
+    "signal_mode": "trend_only",
+    "top_n": 0,
+    "rank_col": "risk_adj_mom",
+    "rebalance_every": 1,
+    "vol_target_annual": 0.0,
+    "max_position_fraction": 1.0,
+    "symbols": [
+      "AAPL",
+      "MSFT",
+      "NVDA",
+      "AMZN",
+      "GOOGL",
+      "META",
+      "AVGO",
+      "JPM",
+      "XOM",
+      "TSLA"
+    ],
+    "data_csv_path": "artifacts/market_daily_us10.csv"
+  },
+  "data_warnings": [],
+  "classification_metrics": {
+    "accuracy": 0.53011,
+    "precision": 0.0,
+    "recall": 0.0,
+    "confusion_matrix": [
+      [
+        5317,
+        0
+      ],
+      [
+        4713,
+        0
+      ]
+    ],
+    "support": 10030
+  },
+  "directional_trade_metrics": {
+    "directional_hit_rate": 0.476841,
+    "samples": 6736
+  },
+  "performance_metrics": {
+    "total_return_pct": 167.457,
+    "sharpe_ratio": 1.361012,
+    "max_drawdown_pct": -16.8613,
+    "win_rate_pct": 70.2128,
+    "profit_factor": 8.551067
+  },
+  "benchmark_comparison": {
+    "buy_and_hold_return_pct": 176.1448,
+    "excess_return_pct": -8.6878
+  },
+  "walk_forward_folds": [
+    {
+      "fold_id": 1,
+      "window_start": "2022-01-01T00:00:00+00:00",
+      "window_end": "2022-04-01T00:00:00+00:00",
+      "train_rows": 9590,
+      "test_rows": 620,
+      "skipped": false,
+      "accuracy": 0.577419,
+      "auc": 0.5,
+      "signal_count": 106
+    },
+    {
+      "fold_id": 2,
+      "window_start": "2022-04-01T00:00:00+00:00",
+      "window_end": "2022-07-01T00:00:00+00:00",
+      "train_rows": 10210,
+      "test_rows": 620,
+      "skipped": false,
+      "accuracy": 0.596774,
+      "auc": 0.5,
+      "signal_count": 29
+    },
+    {
+      "fold_id": 3,
+      "window_start": "2022-07-01T00:00:00+00:00",
+      "window_end": "2022-10-01T00:00:00+00:00",
+      "train_rows": 10830,
+      "test_rows": 640,
+      "skipped": false,
+      "accuracy": 0.557813,
+      "auc": 0.5,
+      "signal_count": 0
+    },
+    {
+      "fold_id": 4,
+      "window_start": "2022-10-01T00:00:00+00:00",
+      "window_end": "2023-01-01T00:00:00+00:00",
+      "train_rows": 11470,
+      "test_rows": 630,
+      "skipped": false,
+      "accuracy": 0.568254,
+      "auc": 0.5,
+      "signal_count": 36
+    },
+    {
+      "fold_id": 5,
+      "window_start": "2023-01-01T00:00:00+00:00",
+      "window_end": "2023-04-01T00:00:00+00:00",
+      "train_rows": 12100,
+      "test_rows": 620,
+      "skipped": false,
+      "accuracy": 0.48871,
+      "auc": 0.5,
+      "signal_count": 260
+    },
+    {
+      "fold_id": 6,
+      "window_start": "2023-04-01T00:00:00+00:00",
+      "window_end": "2023-07-01T00:00:00+00:00",
+      "train_rows": 12720,
+      "test_rows": 620,
+      "skipped": false,
+      "accuracy": 0.529032,
+      "auc": 0.5,
+      "signal_count": 472
+    },
+    {
+      "fold_id": 7,
+      "window_start": "2023-07-01T00:00:00+00:00",
+      "window_end": "2023-10-01T00:00:00+00:00",
+      "train_rows": 13340,
+      "test_rows": 630,
+      "skipped": false,
+      "accuracy": 0.573016,
+      "auc": 0.5,
+      "signal_count": 389
+    },
+    {
+      "fold_id": 8,
+      "window_start": "2023-10-01T00:00:00+00:00",
+      "window_end": "2024-01-01T00:00:00+00:00",
+      "train_rows": 13970,
+      "test_rows": 630,
+      "skipped": false,
+      "accuracy": 0.450794,
+      "auc": 0.5,
+      "signal_count": 456
+    },
+    {
+      "fold_id": 9,
+      "window_start": "2024-01-01T00:00:00+00:00",
+      "window_end": "2024-04-01T00:00:00+00:00",
+      "train_rows": 14600,
+      "test_rows": 610,
+      "skipped": false,
+      "accuracy": 0.488525,
+      "auc": 0.5,
+      "signal_count": 554
+    },
+    {
+      "fold_id": 10,
+      "window_start": "2024-04-01T00:00:00+00:00",
+      "window_end": "2024-07-01T00:00:00+00:00",
+      "train_rows": 15210,
+      "test_rows": 630,
+      "skipped": false,
+      "accuracy": 0.525397,
+      "auc": 0.5,
+      "signal_count": 454
+    },
+    {
+      "fold_id": 11,
+      "window_start": "2024-07-01T00:00:00+00:00",
+      "window_end": "2024-10-01T00:00:00+00:00",
+      "train_rows": 15840,
+      "test_rows": 640,
+      "skipped": false,
+      "accuracy": 0.528125,
+      "auc": 0.5,
+      "signal_count": 364
+    },
+    {
+      "fold_id": 12,
+      "window_start": "2024-10-01T00:00:00+00:00",
+      "window_end": "2025-01-01T00:00:00+00:00",
+      "train_rows": 16480,
+      "test_rows": 640,
+      "skipped": false,
+      "accuracy": 0.5125,
+      "auc": 0.5,
+      "signal_count": 526
+    },
+    {
+      "fold_id": 13,
+      "window_start": "2025-01-01T00:00:00+00:00",
+      "window_end": "2025-04-01T00:00:00+00:00",
+      "train_rows": 17120,
+      "test_rows": 600,
+      "skipped": false,
+      "accuracy": 0.558333,
+      "auc": 0.5,
+      "signal_count": 267
+    },
+    {
+      "fold_id": 14,
+      "window_start": "2025-04-01T00:00:00+00:00",
+      "window_end": "2025-07-01T00:00:00+00:00",
+      "train_rows": 17720,
+      "test_rows": 620,
+      "skipped": false,
+      "accuracy": 0.467742,
+      "auc": 0.5,
+      "signal_count": 174
+    },
+    {
+      "fold_id": 15,
+      "window_start": "2025-07-01T00:00:00+00:00",
+      "window_end": "2025-10-01T00:00:00+00:00",
+      "train_rows": 18340,
+      "test_rows": 640,
+      "skipped": false,
+      "accuracy": 0.525,
+      "auc": 0.5,
+      "signal_count": 515
+    },
+    {
+      "fold_id": 16,
+      "window_start": "2025-10-01T00:00:00+00:00",
+      "window_end": "2026-01-01T00:00:00+00:00",
+      "train_rows": 18980,
+      "test_rows": 640,
+      "skipped": false,
+      "accuracy": 0.534375,
+      "auc": 0.5,
+      "signal_count": 404
+    }
+  ],
+  "artifacts": {
+    "run_dir": "artifacts\\20260817_165642",
+    "latest_dir": "artifacts\\latest",
+    "files": {
+      "predictions_csv": {
+        "run_path": "artifacts\\20260817_165642\\predictions.csv",
+        "latest_path": "artifacts\\latest\\predictions.csv"
+      },
+      "trade_log_csv": {
+        "run_path": "artifacts\\20260817_165642\\trade_log.csv",
+        "latest_path": "artifacts\\latest\\trade_log.csv"
+      },
+      "equity_curve_csv": {
+        "run_path": "artifacts\\20260817_165642\\equity_curve.csv",
+        "latest_path": "artifacts\\latest\\equity_curve.csv"
+      },
+      "benchmark_curve_csv": {
+        "run_path": "artifacts\\20260817_165642\\benchmark_curve.csv",
+        "latest_path": "artifacts\\latest\\benchmark_curve.csv"
+      }
+    },
+    "plots": {
+      "run": {
+        "equity_curve_plot": "artifacts\\20260817_165642\\plots\\equity_curve.html",
+        "drawdown_plot": "artifacts\\20260817_165642\\plots\\drawdown_curve.html",
+        "trade_marker_plot": "artifacts\\20260817_165642\\plots\\trade_markers.html"
+      },
+      "latest": {
+        "equity_curve_plot": "artifacts\\latest\\plots\\equity_curve.html",
+        "drawdown_plot": "artifacts\\latest\\plots\\drawdown_curve.html",
+        "trade_marker_plot": "artifacts\\latest\\plots\\trade_markers.html"
+      }
+    },
+    "model": {
+      "saved": false
+    }
+  }
+}
