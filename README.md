@@ -96,21 +96,42 @@ Set-ExecutionPolicy -Scope Process Bypass
 
 ## Measured walk-forward (public)
 
-First committed cost-aware run: **[`results/2026-07-18_daily_v1/`](./results/2026-07-18_daily_v1/)**.
+### Public v2 — vol-targeted trend sleeve
+
+**[`results/2026-08-17_daily_v3/`](./results/2026-08-17_daily_v3/)** — long-only dual-MA + lagged 18% portfolio vol target.
+
+| | v1 (MLP L/S) | **v2 (trend + vol)** |
+|--|--------------|----------------------|
+| Sharpe | **−0.47** | **1.36** |
+| Max drawdown | **37.1%** | **16.9%** |
+| Total return | **−32.9%** | **+167%** |
+| Test window | 2022 → 2025 | 2022 → 2025 |
+
+Repro: `python train.py --config config.improved_daily.yaml --csv-path ..\results\2026-08-17_daily_v3\market_daily_us10.csv --no-persist-model`.
+
+### Intermediate — trend only
+
+**[`results/2026-08-17_daily_v2/`](./results/2026-08-17_daily_v2/)** — Sharpe **1.21**, MDD **23.8%**, return **+189%**.
+
+### Baseline v1 — original MLP long/short
+
+**[`results/2026-07-18_daily_v1/`](./results/2026-07-18_daily_v1/)** — kept so the failure mode stays visible.
 
 | Sharpe | Max drawdown | Directional hit | Test window |
 |--------|--------------|-----------------|-------------|
 | **−0.47** | **37.1%** | **51.1%** | 2022 → 2025 |
 
-Negative risk-adjusted return vs buy-and-hold on this basket — expected for a first public baseline with fees/slippage inside the optimizer. Full writeup: [`results/README.md`](./results/README.md). Repro: `python train.py --config config.results_daily.yaml --no-persist-model`.
+Near-random next-day classification traded long/short into a mega-cap bull — fees and shorts dominate. Full writeup: [`results/README.md`](./results/README.md).
 
 ## Reproducible research
 
 ```powershell
 cd backend
 .\.venv\Scripts\python.exe train.py --config config.yaml
-# public measured daily run:
+# baseline daily MLP long/short (v1):
 .\.venv\Scripts\python.exe train.py --config config.results_daily.yaml --no-persist-model
+# public v2 — trend + vol target:
+.\.venv\Scripts\python.exe train.py --config config.improved_daily.yaml --csv-path ..\results\2026-08-17_daily_v3\market_daily_us10.csv --no-persist-model
 ```
 
 Outputs land in `backend/artifacts/latest/` (gitignored). Public copies of measured runs live under [`results/`](./results/).
