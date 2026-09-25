@@ -107,7 +107,7 @@ Set-ExecutionPolicy -Scope Process Bypass
 | Total return | **−32.9%** | **+167%** |
 | Test window | 2022 → 2025 | 2022 → 2025 |
 
-Repro: `python train.py --config config.improved_daily.yaml --csv-path ..\results\2026-08-17_daily_v3\market_daily_us10.csv --no-persist-model`.
+Repro: `cd backend` then `python train.py --config config.improved_daily.yaml --csv-path ..\results\2026-08-17_daily_v3\market_daily_us10.csv --no-persist-model`.
 
 ### Intermediate — trend only
 
