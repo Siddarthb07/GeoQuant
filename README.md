@@ -4,7 +4,7 @@
 
 **Keywords:** quantitative trading · algorithmic trading · FastAPI · PyTorch · Alpaca · backtesting · sentiment analysis · walk-forward validation
 
-Full-stack **quantitative / algorithmic trading** platform for **US + India** equities. GeoQuant combines neural-network signal models, global news sentiment analysis, walk-forward backtesting research, and a live trading dashboard (Alpaca paper/live) in one FastAPI app.
+Full-stack **quantitative / algorithmic trading research** platform for **US + India** equities. GeoQuant combines neural-network signal models, global news sentiment analysis, walk-forward backtesting research, and a trading dashboard with an Alpaca order ticket (paper trading by default) in one FastAPI app.
 
 ## v1.0 highlights
 
@@ -95,6 +95,8 @@ Set-ExecutionPolicy -Scope Process Bypass
 ```
 
 ## Measured walk-forward (public)
+
+Historical backtests on a 2022 → 2025 test window, not live trading results. Past performance does not predict future returns.
 
 ### Public v2 — vol-targeted trend sleeve
 
